@@ -171,6 +171,9 @@ void main_task::run() {
     uint8_t spin_i = 0;
     uint8_t spin_timer = 0;
 
+    uint16_t play_pos = 0;
+    uint16_t last_play_pos = 0;
+
     _lcd.clearScreen(C_BLACK);
 
     int num_files = enum_files( fname_list, fsize_list);
@@ -191,6 +194,11 @@ void main_task::run() {
                     update_required = 0;
                 }
                 if(spin_timer >= 100) {
+                    //(bitrate*8/)filesize
+                    //draw bar use last_play_pos
+                    play_pos = decoder.get_position(fsize_list[_sel_index],_lcd.getSizeY());
+                    //draw bar use play_pos
+                    
                     draw_char(20, 300, spinner[spin_i % 4]);
                     spin_i++;
                     spin_timer = 0;

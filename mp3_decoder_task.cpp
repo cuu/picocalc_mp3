@@ -4,9 +4,9 @@
 
 mp3_decoder_task::mp3_decoder_task(pcm_audio_interface & pcm_if, sd_reader_task & sd) :
     task("MP3 decoder", MP3_DECODER_STACKSIZE),
-    _pcm_if(pcm_if), _sd_reader(sd), _led(LED_PIN), _pcm_rate(0)
+    _pcm_if(pcm_if), _sd_reader(sd), _led(LED_PIN), _pcm_rate(0),_bitrate(0),_total_time(0)
 {
-    //mad_timer_reset(&_timer);
+    mad_timer_reset(&_timer);
     _led.gpioMode(GPIO::OUTPUT);
 }
 
@@ -111,8 +111,11 @@ enum mad_flow mp3_decoder_task::header(void *data, struct mad_header const * hea
         _this->_pcm_rate = header->samplerate;
         _this->_pcm_if.setPcmRate( header->samplerate );
     }
-    //mad_timer_add(&_this->_timer, header->duration);
-    //printf("%ld\n,", mad_timer_count(_this->_timer, MAD_UNITS_MILLISECONDS));
+    _this->_bitrate = header->bitrate;
+
+    mad_timer_add(&_this->_timer, header->duration);
+    _this->_total_time = mad_timer_count(_this->_timer, MAD_UNITS_MILLISECONDS);
+    //printf("bitrate: %ld ,%ld\n,",_this->_bitrate, _this->_total_time);
 
     return MAD_FLOW_CONTINUE;
 }
@@ -170,4 +173,23 @@ int16_t mp3_decoder_task::scale(mad_fixed_t sample)
     // (signed) in the range of -32768...32767
     sample >>= (MAD_F_FRACBITS + 1 - 16);
     return (int16_t)sample;
+}
+
+uint16_t mp3_decoder_task::get_position(unsigned long fsize, int max_pos) {
+
+    unsigned long part1 = fsize / _bitrate;
+    unsigned long part2 = fsize % _bitrate;
+    unsigned long t_tm = part1 * 8 + (part2 * 8) / _bitrate;
+
+    unsigned long numerator = _total_time;
+    unsigned long input = max_pos;
+
+    unsigned long intermediate1 = numerator / 1000;
+    unsigned long intermediate2 = numerator % 1000;
+
+    unsigned long cur_pos = ((intermediate1 * input) / t_tm) + (((intermediate2 * input) / 1000) / t_tm);
+
+    //printf("bitrate %d,fsize %d,t_time %lu ,cur_pos %lu\n",_bitrate,fsize,t_tm,cur_pos);
+
+    return (uint16_t)cur_pos;
 }

@@ -16,6 +16,8 @@ public:
 
     void run() override;
 
+    uint16_t  get_position(unsigned long fsize,int max_pos);
+
 private:
     static enum mad_flow input (void *data, struct mad_stream *stream);
     static enum mad_flow header(void *data, struct mad_header const *);
@@ -29,7 +31,9 @@ private:
     gpio_rp2040_pin         _led;
     uint8_t                 _mp3_buf[MP3_BUF_SIZE]{};
     uint32_t                _pcm_rate;
-    //mad_timer_t             _timer;
+    mad_timer_t             _timer;
+    unsigned long           _bitrate;
+    unsigned long           _total_time;
 };
 
 #endif // MP3_DECODER_TASK_H
