@@ -9,7 +9,11 @@ mp3_decoder_task::mp3_decoder_task(pcm_audio_interface & pcm_if, sd_reader_task 
     mad_timer_reset(&_timer);
     _led.gpioMode(GPIO::OUTPUT);
 }
-
+void mp3_decoder_task::reset() {
+    _total_time = 0;
+    _bitrate = 0;
+    mad_timer_reset(&_timer);
+}
 void mp3_decoder_task::run() {
 
     mad_decoder_init(&_decoder, // the decoder object
@@ -20,6 +24,7 @@ void mp3_decoder_task::run() {
                      output,    // output callback
                      error,     // error  callback
                      nullptr);  // message callback
+
 
     mad_decoder_run(&_decoder, MAD_DECODER_MODE_SYNC);
     mad_decoder_finish(&_decoder);

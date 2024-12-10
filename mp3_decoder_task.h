@@ -15,7 +15,7 @@ public:
     mp3_decoder_task(pcm_audio_interface & pcm_if, sd_reader_task & sd);
 
     void run() override;
-
+    void reset();
     uint16_t  get_position(unsigned long fsize,int max_pos);
 
 private:

@@ -23,7 +23,9 @@ main_task::main_task()
           _last_sel_index(0),
           update_sel(0),
           update_required(1),
-          playing(0){
+          playing(0),
+          last_play_pos(0),
+          play_pos(0){
 
     _next.gpioMode(GPIO::INPUT | GPIO::PULLUP);
     _part.gpioMode(GPIO::INPUT | GPIO::PULLUP);
@@ -40,6 +42,10 @@ void main_task::draw_string(int x,int y,const char*str){
 void main_task::draw_char(int x,int y ,char c) {
     _gui.FontSelect(&FONT_8X14);
     _gui.PutChar(c,x,y,C_GREEN,C_BLACK, true);
+}
+
+void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
+   _gui.FillFrame(x1,280,x2,285,c);
 }
 
 int main_task::enum_files(char **fname_list, int *fsize_list) {
@@ -81,10 +87,23 @@ int main_task::enum_files(char **fname_list, int *fsize_list) {
     return num_files;
 }
 
-int main_task::select_mp3(int num_files, char **file_list) {
+void truncate_string(const char *input, char *output, size_t max_length) {
+    size_t input_len = strlen(input);
 
+    if (input_len <= max_length) {
+        strcpy(output, input);
+    } else {
+        strncpy(output, input, max_length - 3);
+        output[max_length - 3] = '\0';
+        strcat(output, "...");
+    }
+}
+
+int main_task::select_mp3(int num_files, char **file_list) {
+    char tmp[34];
     for (int i = 0; i < ITEMS_PER_PAGE && (_page_index + i) < num_files; i++) {
-        draw_string(20, i * 20, file_list[_page_index + i]);
+        truncate_string(file_list[_page_index+i],tmp,33);
+        draw_string(20, i * 20, tmp);
     }
 
     return 0;
@@ -113,6 +132,9 @@ void main_task::boot_menu(int num_files, char **file_list) {
         select_mp3(num_files,file_list);
         draw_cursor();
         update_required = 0;
+        last_play_pos = 0;
+        play_pos = 0;
+
     }
 
     if(update_sel){
@@ -146,13 +168,16 @@ void main_task::menu_start(char **fname_list ,sd_reader_task&sd_reader,mp3_decod
     res = _fs.open(&_file, fname_list[_sel_index], FA_OPEN_EXISTING | FA_READ);
     assert(res == FatFs::FR_OK);
     sd_reader.start(&_fs, &_file);
+    decoder.reset();
     decoder.start();
     update_required = 1;
     playing =1;
+    last_play_pos = 0;
+    play_pos = 0;
 }
 
 void main_task::run() {
-
+    char tmp[34];
     char *fname_list[MAX_FILES];
     int fsize_list[MAX_FILES];
     i2c_kbd _kbd;
@@ -171,8 +196,7 @@ void main_task::run() {
     uint8_t spin_i = 0;
     uint8_t spin_timer = 0;
 
-    uint16_t play_pos = 0;
-    uint16_t last_play_pos = 0;
+    int play_pos_diff = 0;
 
     _lcd.clearScreen(C_BLACK);
 
@@ -188,7 +212,8 @@ void main_task::run() {
 
                 if(update_required) {
                     _lcd.clearScreen(C_BLACK);
-                    draw_string(20, 20, fname_list[_sel_index]);
+                    truncate_string(fname_list[_sel_index],tmp,33);
+                    draw_string(20, 20, tmp);
                     draw_string(20, 40, "playing");
                     draw_string(20, 60, "press Esc to quit");
                     update_required = 0;
@@ -196,12 +221,20 @@ void main_task::run() {
                 if(spin_timer >= 100) {
                     //(bitrate*8/)filesize
                     //draw bar use last_play_pos
+                    //draw_bar(0,last_play_pos,C_BLACK);
                     play_pos = decoder.get_position(fsize_list[_sel_index],_lcd.getSizeY());
                     //draw bar use play_pos
-                    
+                    play_pos_diff = play_pos - last_play_pos;
+                    if(play_pos_diff < 0) {// VBR
+                        draw_bar(play_pos,last_play_pos,C_BLACK);
+                    }else{ //>= 0
+                        //draw_bar(last_play_pos,play_pos,C_BLACK);
+                        draw_bar(play_pos,play_pos+play_pos_diff,C_YELLOW);
+                    }
                     draw_char(20, 300, spinner[spin_i % 4]);
                     spin_i++;
                     spin_timer = 0;
+                    last_play_pos = play_pos;
                 }
                 spin_timer++;
             }else{

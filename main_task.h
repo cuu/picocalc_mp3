@@ -47,6 +47,7 @@ public:
     void run() override;
     void draw_string(int,int,const char*);
     void draw_char(int x,int y ,char c);
+    void draw_bar(int x1,int x2,UG_COLOR c);
     int enum_files(char **fname_list, int *fsize_list);
     int select_mp3(int,char**);
     void draw_cursor();
@@ -81,6 +82,9 @@ private:
     uint8_t update_sel;
     uint8_t update_required;
     uint8_t playing;
+    uint8_t last_play_pos;
+    uint8_t play_pos;
+
 };
 
 #endif // MAIN_TASK_H
