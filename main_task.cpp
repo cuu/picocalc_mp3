@@ -76,6 +76,9 @@ int main_task::enum_files(char **fname_list, int *fsize_list) {
 
         res = _fs.findnext(&_dir, &_finfo);
         num_files++;
+        if(num_files>=MAX_FILES){
+            break;
+        }
     }
     if (res != FatFs::FR_OK) {
         sprintf(tmp, "[NG] code=0x%x", (int)res);
@@ -87,6 +90,11 @@ int main_task::enum_files(char **fname_list, int *fsize_list) {
     return num_files;
 }
 
+//In ffconf.h,
+// set
+// #define FF_MAX_LFN		33
+// #define FF_LFN_BUF		33
+/*
 void truncate_string(const char *input, char *output, size_t max_length) {
     size_t input_len = strlen(input);
 
@@ -98,12 +106,12 @@ void truncate_string(const char *input, char *output, size_t max_length) {
         strcat(output, "...");
     }
 }
-
+*/
 int main_task::select_mp3(int num_files, char **file_list) {
     char tmp[34];
     for (int i = 0; i < ITEMS_PER_PAGE && (_page_index + i) < num_files; i++) {
-        truncate_string(file_list[_page_index+i],tmp,33);
-        draw_string(20, i * 20, tmp);
+        //truncate_string(file_list[_page_index+i],tmp,33);
+        draw_string(20, i * 20, file_list[_page_index+i]);
     }
 
     return 0;
@@ -212,8 +220,8 @@ void main_task::run() {
 
                 if(update_required) {
                     _lcd.clearScreen(C_BLACK);
-                    truncate_string(fname_list[_sel_index],tmp,33);
-                    draw_string(20, 20, tmp);
+                    //truncate_string(fname_list[_sel_index],tmp,33);
+                    draw_string(20, 20, fname_list[_sel_index]);
                     draw_string(20, 40, "playing");
                     draw_string(20, 60, "press Esc to quit");
                     update_required = 0;
