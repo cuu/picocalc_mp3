@@ -231,6 +231,7 @@ void main_task::run() {
                     //draw bar use last_play_pos
                     //draw_bar(0,last_play_pos,C_BLACK);
                     play_pos = decoder.get_position(fsize_list[_sel_index],_lcd.getSizeY());
+                    printf("play_pos %d\n",play_pos);
                     //draw bar use play_pos
                     play_pos_diff = play_pos - last_play_pos;
                     if(play_pos_diff < 0) {// VBR

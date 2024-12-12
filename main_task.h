@@ -37,6 +37,7 @@
 #include "uGUI.h"
 #include "uGUI_colors.h"
 #include "font_8x14.h"
+#include "font_16x20.h"
 #include "ili9488_drv.h"
 #include "i2ckbd.h"
 
@@ -82,8 +83,8 @@ private:
     uint8_t update_sel;
     uint8_t update_required;
     uint8_t playing;
-    uint8_t last_play_pos;
-    uint8_t play_pos;
+    uint16_t last_play_pos;
+    uint16_t play_pos;
 
 };
 
