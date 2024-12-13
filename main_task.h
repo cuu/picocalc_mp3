@@ -56,6 +56,7 @@ public:
     void menu_up(int);
     void menu_down(int);
     void menu_start(char**list,sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv);
+    void draw_logo();
 private:
     gpio_rp2040_pin _cs;    // CS Line of SD card SPI interface
     spi_rp2040      _spi;   // SPI interface used for the SD card reader

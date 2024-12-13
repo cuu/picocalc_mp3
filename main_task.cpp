@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include "main_task.h"
+#include "logo.c"
 
 main_task::main_task()
         : task("Main", MAIN_STACKSIZE),
@@ -184,6 +185,29 @@ void main_task::menu_start(char **fname_list ,sd_reader_task&sd_reader,mp3_decod
     play_pos = 0;
 }
 
+void main_task::draw_logo(){
+    uint16_t start_x,start_y;
+
+    start_x = (_lcd.getSizeX() - gimp_image.width)/2;
+    start_y = (_lcd.getSizeY() - gimp_image.height)/2;
+    const uint16_t* pixel_data = (const uint16_t*)gimp_image.pixel_data;
+    for (unsigned int y = 0; y < gimp_image.height; ++y) {
+        for (unsigned int x = 0; x < gimp_image.width; ++x) {
+            uint16_t pixel = pixel_data[y * gimp_image.width + x];
+            uint8_t r = (pixel >> 11) & 0x1F;
+            uint8_t g = (pixel >> 5) & 0x3F;
+            uint8_t b = pixel & 0x1F;
+
+            r = (r * 255 + 15) / 31;
+            g = (g * 255 + 31) / 63;
+            b = (b * 255 + 15) / 31;
+
+            uint32_t color = (r << 16) | (g << 8) | b;
+            _lcd.drawPixel(start_x+x,start_y+y, color);
+        }
+    }
+}
+
 void main_task::run() {
     char tmp[34];
     char *fname_list[MAX_FILES];
@@ -207,6 +231,8 @@ void main_task::run() {
     int play_pos_diff = 0;
 
     _lcd.clearScreen(C_BLACK);
+    draw_logo();
+    task::sleep_ms(2000);
 
     int num_files = enum_files( fname_list, fsize_list);
     if (num_files <= 0) {
