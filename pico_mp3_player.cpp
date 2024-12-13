@@ -17,7 +17,6 @@ int main()
     posix_io::inst.register_stderr( uart );
 
     task::sleep_ms(2000);//really neccessary form uart debug
-    printf("Fuck yeah!\n");
     // Start Main task as privileged task
     main_task Main;
     Main.start(MAIN_PRIORITY, true);
