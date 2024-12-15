@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include "main_task.h"
-#include "logo.c"
+#include "logo50.h"
 
 main_task::main_task()
         : task("Main", MAIN_STACKSIZE),
@@ -188,21 +188,21 @@ void main_task::menu_start(char **fname_list ,sd_reader_task&sd_reader,mp3_decod
 void main_task::draw_logo(){
     uint16_t start_x,start_y;
 
-    start_x = (_lcd.getSizeX() - gimp_image.width)/2;
-    start_y = (_lcd.getSizeY() - gimp_image.height)/2;
-    const uint16_t* pixel_data = (const uint16_t*)gimp_image.pixel_data;
-    for (unsigned int y = 0; y < gimp_image.height; ++y) {
-        for (unsigned int x = 0; x < gimp_image.width; ++x) {
-            uint16_t pixel = pixel_data[y * gimp_image.width + x];
-            uint8_t r = (pixel >> 11) & 0x1F;
-            uint8_t g = (pixel >> 5) & 0x3F;
-            uint8_t b = pixel & 0x1F;
+    start_x = (_lcd.getSizeX() - logo_width)/2;
+    start_y = (_lcd.getSizeY() - logo_height)/2;
 
-            r = (r * 255 + 15) / 31;
-            g = (g * 255 + 31) / 63;
-            b = (b * 255 + 15) / 31;
+    unsigned char *data = (unsigned char *)header_data; // 原始索引数据
+    for (unsigned int y = 0; y < logo_height; ++y) {
+        for (unsigned int x = 0; x < logo_width; ++x) {
+            unsigned char pixel[3];
+            HEADER_PIXEL(data, pixel);
 
-            uint32_t color = (r << 16) | (g << 8) | b;
+            // 将颜色存储为 RGB888 格式
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            uint32_t color = (r << 16) | (g << 8) | b; // RGB888
             _lcd.drawPixel(start_x+x,start_y+y, color);
         }
     }
