@@ -41,22 +41,36 @@
 #include "ili9488_drv.h"
 #include "i2ckbd.h"
 
+typedef struct menu_item {
+    uint16_t x;
+    uint16_t y;
+    char *fname; ///pointer to a malloced char buf
+    int fsize;
+}MENU_ITEM;
+
+
 class main_task : public task
 {
 public:
     main_task();
     void run() override;
     void draw_string(int,int,const char*);
+    void draw_highlight_string(int,int,const char*);
     void draw_char(int x,int y ,char c);
     void draw_bar(int x1,int x2,UG_COLOR c);
-    int enum_files(char **fname_list, int *fsize_list);
-    int select_mp3(int,char**);
+    int enum_files();
+    int select_mp3();
     void draw_cursor();
-    void boot_menu(int,char**);
-    void menu_up(int);
-    void menu_down(int);
-    void menu_start(char**list,sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv);
+    void boot_menu();
+    void menu_up();
+    void menu_down();
+    void menu_start(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv);
     void draw_logo();
+    void clear_screen();
+    void clear_menu();
+    void draw_header();
+    void draw_footer();
+    void draw_playing();
 private:
     gpio_rp2040_pin _cs;    // CS Line of SD card SPI interface
     spi_rp2040      _spi;   // SPI interface used for the SD card reader
@@ -86,7 +100,8 @@ private:
     uint8_t playing;
     uint16_t last_play_pos;
     uint16_t play_pos;
-
+    MENU_ITEM  menu_items[MAX_FILES]{};
+    uint16_t num_files;
 };
 
 #endif // MAIN_TASK_H

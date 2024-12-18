@@ -26,33 +26,49 @@ main_task::main_task()
           update_required(1),
           playing(0),
           last_play_pos(0),
-          play_pos(0){
+          play_pos(0),
+          num_files(0){
 
     _next.gpioMode(GPIO::INPUT | GPIO::PULLUP);
     _part.gpioMode(GPIO::INPUT | GPIO::PULLUP);
     _ps.gpioMode(GPIO::OUTPUT | GPIO::INIT_HIGH);
     _gui.FontSelect(&FONT_8X14);
-    _gui.SetForecolor(C_GREEN);
+    _gui.SetForecolor(C_GAINSBORO);
+
+    for(auto & menu_item : menu_items){
+        menu_item.fsize = 0;
+        menu_item.fname = nullptr;
+        menu_item.x = 0;
+        menu_item.y = 0;
+    }
 }
 
 void main_task::draw_string(int x,int y,const char*str){
     _gui.FontSelect(&FONT_8X14);
-    _gui.SetForecolor(C_GREEN);
+    _gui.SetForecolor(C_GAINSBORO);
+    _gui.SetBackcolor(C_BLACK);
     _gui.PutString(x,y,str);
 }
+void main_task::draw_highlight_string(int x,int y,const char*str){
+    _gui.FontSelect(&FONT_8X14);
+    _gui.SetForecolor(C_BLACK);
+    _gui.SetBackcolor(C_GAINSBORO);
+    _gui.PutString(x,y,str);
+}
+
 void main_task::draw_char(int x,int y ,char c) {
     _gui.FontSelect(&FONT_8X14);
-    _gui.PutChar(c,x,y,C_GREEN,C_BLACK, true);
+    _gui.PutChar(c,x,y,C_GAINSBORO,C_BLACK, true);
 }
 
 void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
    _gui.FillFrame(x1,280,x2,285,c);
 }
 
-int main_task::enum_files(char **fname_list, int *fsize_list) {
+int main_task::enum_files() {
     char tmp[16];
     _gui.FontSelect(&FONT_8X14);
-    _gui.ConsoleSetForecolor(C_GREEN);
+    _gui.ConsoleSetForecolor(C_GAINSBORO);
     _gui.ConsoleSetBackcolor(C_BLACK);
     _gui.ConsolePutString("Init FatFS");
     FatFs::FRESULT res = _fs.mount(0);
@@ -66,14 +82,14 @@ int main_task::enum_files(char **fname_list, int *fsize_list) {
     _gui.ConsolePutString("\n");
     _gui.ConsolePutString("File List");
 
-    int num_files = 0;
+    num_files = 0;
     res = _fs.findfirst(&_dir, &_finfo, "", "*.mp3");
     // Loop over all MP3 files
     while (res == FatFs::FR_OK && _finfo.fname[0] && strlen(_finfo.fname) > 4 ) {
         printf("%s\n",_finfo.fname);
-        fname_list[num_files] = (char*)malloc(strlen(_finfo.fname) + 1);
-        strcpy(fname_list[num_files], _finfo.fname);
-        fsize_list[num_files] = _finfo.fsize;
+        menu_items[num_files].fname = (char*)malloc(strlen(_finfo.fname) + 1);
+        strcpy(menu_items[num_files].fname, _finfo.fname);
+        menu_items[num_files].fsize = _finfo.fsize;
 
         res = _fs.findnext(&_dir, &_finfo);
         num_files++;
@@ -108,11 +124,31 @@ void truncate_string(const char *input, char *output, size_t max_length) {
     }
 }
 */
-int main_task::select_mp3(int num_files, char **file_list) {
+#define HEADER_HEIGHT 20
+#define FONT1_HEIGHT 14
+#define FONT1_GAP 3 // ( 20 -14)/2
+int main_task::select_mp3() {
     char tmp[34];
+    uint16_t start_x = 11;
+    uint16_t start_y= HEADER_HEIGHT+3;
+    /*               header
+     * ------------------------------------------
+     * 3px
+     * [item]
+     * 3px
+     * [item]
+     * 3px
+     * [item]
+     * 3px
+     */
+
     for (int i = 0; i < ITEMS_PER_PAGE && (_page_index + i) < num_files; i++) {
         //truncate_string(file_list[_page_index+i],tmp,33);
-        draw_string(20, i * 20, file_list[_page_index+i]);
+        menu_items[i].x = start_x;
+        menu_items[i].y = start_y;
+
+        draw_string(menu_items[i].x, menu_items[i].y, menu_items[_page_index + i].fname);
+        start_y+=23;
     }
 
     return 0;
@@ -122,23 +158,42 @@ void main_task::draw_cursor() {
     sprintf(buf, "%02d", _sel_index + 1);
     draw_string(0,_lcd.getSizeY()-20,buf);
 
+    uint16_t x,y;
+
     if(update_sel){
-        draw_string(0, (_last_sel_index % ITEMS_PER_PAGE) * 20, "  ");
+        x = menu_items[_last_sel_index%ITEMS_PER_PAGE].x;
+        y = menu_items[_last_sel_index%ITEMS_PER_PAGE].y;
+
+        _gui.FillFrame(10,y-2,_lcd.getSizeX()-10,y+15,C_BLACK);
+        draw_string(x,y, menu_items[_page_index+_last_sel_index].fname);
     }
-    draw_string(0, (_sel_index % ITEMS_PER_PAGE) * 20, "=>");
+    x = menu_items[_sel_index % ITEMS_PER_PAGE].x;
+    y = menu_items[_sel_index % ITEMS_PER_PAGE].y;
+
+    _gui.FillFrame(10,y-2,_lcd.getSizeX()-10,y+15,C_GAINSBORO);
+    //draw_string(0, (_sel_index % ITEMS_PER_PAGE) * 20+20, "=>");
+    draw_highlight_string(11, y, menu_items[_page_index+_sel_index].fname);
+
 }
 
-void main_task::boot_menu(int num_files, char **file_list) {
+void main_task::clear_screen() {
+    _lcd.clearScreen(C_BLACK);
+}
+void main_task::clear_menu() {
+    //clear menu section area, not whole screen
+    _lcd.fillArea(0,20,_lcd.getSizeX()-1,_lcd.getSizeY()-20,C_BLACK);
+}
+void main_task::boot_menu() {
     _page_index = (_sel_index / ITEMS_PER_PAGE) * ITEMS_PER_PAGE;
     if(_page_index!= _last_page_index){
-        _lcd.clearScreen(C_BLACK);
+        clear_menu();
         _last_page_index = _page_index;
         update_required = 1;
     }
 
     if(update_required) {
-        _lcd.clearScreen(C_BLACK);
-        select_mp3(num_files,file_list);
+        clear_menu();
+        select_mp3();
         draw_cursor();
         update_required = 0;
         last_play_pos = 0;
@@ -152,7 +207,7 @@ void main_task::boot_menu(int num_files, char **file_list) {
     }
 }
 
-void main_task::menu_up(int num_files) {
+void main_task::menu_up() {
     _last_sel_index = _sel_index;
     if (_sel_index == 0) {
         _sel_index = num_files - 1;
@@ -161,7 +216,7 @@ void main_task::menu_up(int num_files) {
     }
     update_sel = 1;
 }
-void main_task::menu_down(int num_files) {
+void main_task::menu_down() {
     _last_sel_index = _sel_index;
     if (_sel_index == num_files - 1) {
         _sel_index = 0;
@@ -171,10 +226,10 @@ void main_task::menu_down(int num_files) {
     update_sel = 1;
 }
 
-void main_task::menu_start(char **fname_list ,sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv) {
+void main_task::menu_start(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv) {
     FatFs::FRESULT res = FatFs::FR_OK;
-    printf("start play: %s\n",fname_list[_sel_index]);
-    res = _fs.open(&_file, fname_list[_sel_index], FA_OPEN_EXISTING | FA_READ);
+    printf("start play: %s\n",menu_items[_sel_index].fname);
+    res = _fs.open(&_file, menu_items[_sel_index].fname, FA_OPEN_EXISTING | FA_READ);
     assert(res == FatFs::FR_OK);
     sd_reader.start(&_fs, &_file);
     decoder.reset();
@@ -207,11 +262,31 @@ void main_task::draw_logo(){
         }
     }
 }
+//header Height 20
+void main_task::draw_header() {
+    char*title = "Playlist";
+    _gui.FontSelect(&FONT_8X14);
+    _gui.SetForecolor(C_GAINSBORO);
+    _gui.SetBackcolor(C_BLACK);
+    _gui.PutString((_lcd.getSizeX()- strlen(title)*8)/2,(20-14)/2,title);
+    _lcd.drawHLine(10,19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
+}
+
+void main_task::draw_footer() {
+
+}
+
+void main_task::draw_playing() {
+
+    char * song_name = menu_items[_sel_index].fname;
+    draw_string(20, 23, song_name);
+    draw_string(20, 43, "playing");
+    draw_string(20, 63, "press Esc to quit");
+}
+
 
 void main_task::run() {
     char tmp[34];
-    char *fname_list[MAX_FILES];
-    int fsize_list[MAX_FILES];
     i2c_kbd _kbd;
 
     pcm_pwm_rp2040_drv pcm_drv(AUDIO_LEFT, AUDIO_RIGHT);
@@ -232,31 +307,32 @@ void main_task::run() {
 
     _lcd.clearScreen(C_BLACK);
     draw_logo();
-    task::sleep_ms(2000);
+    task::sleep_ms(1000);
+    clear_screen();
 
-    int num_files = enum_files( fname_list, fsize_list);
+    num_files = enum_files();
     if (num_files <= 0) {
         printf("num_files <=0\n");
         return;
     }
+    clear_screen();
+    draw_header();
     while (true){
         if(playing){
             if (sd_reader.isAlive() &&  decoder.isAlive()) {
                 //printf("playing now\n");
 
                 if(update_required) {
-                    _lcd.clearScreen(C_BLACK);
+                    clear_menu();
                     //truncate_string(fname_list[_sel_index],tmp,33);
-                    draw_string(20, 20, fname_list[_sel_index]);
-                    draw_string(20, 40, "playing");
-                    draw_string(20, 60, "press Esc to quit");
+                    draw_playing();
                     update_required = 0;
                 }
                 if(spin_timer >= 100) {
                     //(bitrate*8/)filesize
                     //draw bar use last_play_pos
                     //draw_bar(0,last_play_pos,C_BLACK);
-                    play_pos = decoder.get_position(fsize_list[_sel_index],_lcd.getSizeY());
+                    play_pos = decoder.get_position(menu_items[_sel_index].fsize,_lcd.getSizeY());
                     printf("play_pos %d\n",play_pos);
                     //draw bar use play_pos
                     play_pos_diff = play_pos - last_play_pos;
@@ -264,7 +340,7 @@ void main_task::run() {
                         draw_bar(play_pos,last_play_pos,C_BLACK);
                     }else{ //>= 0
                         //draw_bar(last_play_pos,play_pos,C_BLACK);
-                        draw_bar(play_pos,play_pos+play_pos_diff,C_YELLOW);
+                        draw_bar(play_pos,play_pos+play_pos_diff,C_GAINSBORO);
                     }
                     draw_char(20, 300, spinner[spin_i % 4]);
                     spin_i++;
@@ -279,7 +355,7 @@ void main_task::run() {
                 update_required =1;
             }
         }else{
-            boot_menu(num_files,fname_list);
+            boot_menu();
         }
 
         if(keycheck == 0) {
@@ -321,12 +397,12 @@ void main_task::run() {
             switch (c) {
                 case 0xb5://UP
                     if(key_stat == 1) {
-                        menu_up(num_files);
+                        menu_up();
                     }
                     break;
                 case 0xb6://DOWN
                     if(key_stat == 1) {
-                        menu_down(num_files);
+                        menu_down();
                     }
                     break;
                 case 0xb4://LEFT
@@ -335,7 +411,7 @@ void main_task::run() {
                     break;
                 case 0x0A://ENTER
                     if(key_stat == 1) {
-                        menu_start(fname_list, sd_reader, decoder, pcm_drv);
+                        menu_start(sd_reader, decoder, pcm_drv);
                     }
                     break;
                 case 0xB1://ESC
