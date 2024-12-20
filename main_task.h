@@ -68,7 +68,7 @@ public:
     void draw_logo();
     void clear_screen();
     void clear_menu();
-    void draw_header();
+    void draw_header(char*);
     void draw_footer();
     void draw_playing();
 private:

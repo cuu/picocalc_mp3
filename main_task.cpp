@@ -193,6 +193,7 @@ void main_task::boot_menu() {
 
     if(update_required) {
         clear_menu();
+        draw_header("Playlist");
         select_mp3();
         draw_cursor();
         update_required = 0;
@@ -263,12 +264,12 @@ void main_task::draw_logo(){
     }
 }
 //header Height 20
-void main_task::draw_header() {
-    char*title = "Playlist";
+void main_task::draw_header(char*title) {
     _gui.FontSelect(&FONT_8X14);
     _gui.SetForecolor(C_GAINSBORO);
     _gui.SetBackcolor(C_BLACK);
-    _gui.PutString((_lcd.getSizeX()- strlen(title)*8)/2,(20-14)/2,title);
+    _gui.PutString(11,(20-14)/2,"                  ");
+    _gui.PutString(11,(20-14)/2,title);
     _lcd.drawHLine(10,19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
 }
 
@@ -316,7 +317,7 @@ void main_task::run() {
         return;
     }
     clear_screen();
-    draw_header();
+    draw_header("Playlist");
     while (true){
         if(playing){
             if (sd_reader.isAlive() &&  decoder.isAlive()) {
@@ -325,6 +326,7 @@ void main_task::run() {
                 if(update_required) {
                     clear_menu();
                     //truncate_string(fname_list[_sel_index],tmp,33);
+                    draw_header("Now Playing");
                     draw_playing();
                     update_required = 0;
                 }
