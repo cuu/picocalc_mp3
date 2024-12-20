@@ -37,7 +37,7 @@
 #include "uGUI.h"
 #include "uGUI_colors.h"
 #include "font_8x14.h"
-#include "font_16x20.h"
+#include "font_24x40.h"
 #include "ili9488_drv.h"
 #include "i2ckbd.h"
 
@@ -57,6 +57,7 @@ public:
     void draw_string(int,int,const char*);
     void draw_highlight_string(int,int,const char*);
     void draw_char(int x,int y ,char c);
+    void draw_big_char(int x,int y ,char c);
     void draw_bar(int x1,int x2,UG_COLOR c);
     int enum_files();
     int select_mp3();
@@ -71,6 +72,7 @@ public:
     void draw_header(char*);
     void draw_footer();
     void draw_playing();
+    void draw_wrap_text(const char *);
 private:
     gpio_rp2040_pin _cs;    // CS Line of SD card SPI interface
     spi_rp2040      _spi;   // SPI interface used for the SD card reader

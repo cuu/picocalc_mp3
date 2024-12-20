@@ -61,8 +61,49 @@ void main_task::draw_char(int x,int y ,char c) {
     _gui.PutChar(c,x,y,C_GAINSBORO,C_BLACK, true);
 }
 
+void main_task::draw_big_char(int x,int y ,char c) {
+    _gui.FontSelect(&FONT_24X40);
+    _gui.PutChar(c,x,y,C_GAINSBORO,C_BLACK, true);
+}
 void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
    _gui.FillFrame(x1,280,x2,285,c);
+}
+
+
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 280
+#define FONT_WIDTH 24
+#define FONT_HEIGHT 40
+#define MAX_CHARS_PER_LINE (SCREEN_WIDTH / FONT_WIDTH)
+#define MAX_LINES 2
+
+void main_task::draw_wrap_text(const char *text) {
+    int line_count = 0;
+    const char *ptr = text;
+
+
+    char lines[MAX_LINES][MAX_CHARS_PER_LINE + 1] = {{0}};
+    while (*ptr && line_count < MAX_LINES) {
+        int i = 0;
+        while (*ptr && i < MAX_CHARS_PER_LINE) {
+            lines[line_count][i++] = *ptr++;
+        }
+        lines[line_count][i] = '\0';
+        line_count++;
+    }
+
+
+    int text_height = line_count * FONT_HEIGHT;
+    int y_offset = (SCREEN_HEIGHT - text_height) / 2;
+
+
+    for (int line = 0; line < line_count; line++) {
+        int char_count = strlen(lines[line]);
+        int x_offset = (SCREEN_WIDTH - char_count * FONT_WIDTH) / 2; 
+        for (int j = 0; j < char_count; j++) {
+            draw_big_char(x_offset + j * FONT_WIDTH, y_offset + line * FONT_HEIGHT, lines[line][j]);
+        }
+    }
 }
 
 int main_task::enum_files() {
@@ -280,9 +321,8 @@ void main_task::draw_footer() {
 void main_task::draw_playing() {
 
     char * song_name = menu_items[_sel_index].fname;
-    draw_string(20, 23, song_name);
-    draw_string(20, 43, "playing");
-    draw_string(20, 63, "press Esc to quit");
+    draw_wrap_text(song_name);
+
 }
 
 
