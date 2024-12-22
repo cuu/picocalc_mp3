@@ -1,4 +1,3 @@
-/*  GIMP header image file format (INDEXED): /home/guu/Pictures/enter.h  */
 
 static unsigned int enter_width = 18;
 static unsigned int enter_height = 18;

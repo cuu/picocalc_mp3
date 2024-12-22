@@ -1,4 +1,3 @@
-/*  GIMP header image file format (INDEXED): /home/guu/Pictures/esc18.h  */
 
 static unsigned int esc_width = 18;
 static unsigned int esc_height = 18;
