@@ -17,7 +17,7 @@ public:
     void run() override;
     void reset();
     uint16_t  get_position(unsigned long fsize,int max_pos);
-
+    uint32_t get_total_seconds();
 private:
     static enum mad_flow input (void *data, struct mad_stream *stream);
     static enum mad_flow header(void *data, struct mad_header const *);

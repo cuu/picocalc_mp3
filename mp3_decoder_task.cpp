@@ -198,3 +198,7 @@ uint16_t mp3_decoder_task::get_position(unsigned long fsize, int max_pos) {
 
     return (uint16_t)cur_pos;
 }
+
+uint32_t mp3_decoder_task::get_total_seconds() {
+    return _total_time/1000;
+}

@@ -2,6 +2,9 @@
 #include <cstring>
 #include "main_task.h"
 #include "logo50.h"
+#include "enter18.h"
+#include "esc18.h"
+#include "nav18.h"
 
 main_task::main_task()
         : task("Main", MAIN_STACKSIZE),
@@ -43,8 +46,18 @@ main_task::main_task()
     }
 }
 
-void main_task::draw_string(int x,int y,const char*str){
-    _gui.FontSelect(&FONT_8X14);
+void main_task::draw_string(int x,int y,const char*str,uint8_t fnt = 1){
+
+    if(fnt == 0) {
+        _gui.FontSelect(&FONT_6X8);
+    }
+    if(fnt == 1) {
+        _gui.FontSelect(&FONT_8X14);
+    }
+    if(fnt == 2) {
+        _gui.FontSelect(&FONT_24X40);
+    }
+
     _gui.SetForecolor(C_GAINSBORO);
     _gui.SetBackcolor(C_BLACK);
     _gui.PutString(x,y,str);
@@ -66,7 +79,8 @@ void main_task::draw_big_char(int x,int y ,char c) {
     _gui.PutChar(c,x,y,C_GAINSBORO,C_BLACK, true);
 }
 void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
-   _gui.FillFrame(x1,280,x2,285,c);
+    uint8_t  offsetx = 10;
+   _gui.FillFrame(x1+offsetx,280,x2+offsetx,285,c);
 }
 
 
@@ -99,7 +113,7 @@ void main_task::draw_wrap_text(const char *text) {
 
     for (int line = 0; line < line_count; line++) {
         int char_count = strlen(lines[line]);
-        int x_offset = (SCREEN_WIDTH - char_count * FONT_WIDTH) / 2; 
+        int x_offset = (SCREEN_WIDTH - char_count * FONT_WIDTH) / 2;
         for (int j = 0; j < char_count; j++) {
             draw_big_char(x_offset + j * FONT_WIDTH, y_offset + line * FONT_HEIGHT, lines[line][j]);
         }
@@ -166,8 +180,6 @@ void truncate_string(const char *input, char *output, size_t max_length) {
 }
 */
 #define HEADER_HEIGHT 20
-#define FONT1_HEIGHT 14
-#define FONT1_GAP 3 // ( 20 -14)/2
 int main_task::select_mp3() {
     char tmp[34];
     uint16_t start_x = 11;
@@ -196,8 +208,8 @@ int main_task::select_mp3() {
 }
 void main_task::draw_cursor() {
     char buf[12];
-    sprintf(buf, "%02d", _sel_index + 1);
-    draw_string(0,_lcd.getSizeY()-20,buf);
+    //sprintf(buf, "%02d", _sel_index + 1);
+    //draw_string(0,_lcd.getSizeY()-20,buf);
 
     uint16_t x,y;
 
@@ -237,6 +249,7 @@ void main_task::boot_menu() {
         draw_header("Playlist");
         select_mp3();
         draw_cursor();
+        draw_footer(1);
         update_required = 0;
         last_play_pos = 0;
         play_pos = 0;
@@ -314,8 +327,90 @@ void main_task::draw_header(char*title) {
     _lcd.drawHLine(10,19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
 }
 
-void main_task::draw_footer() {
+void main_task::draw_footer_esc() {
+    uint16_t start_x,start_y;
 
+    start_x = 270;
+    start_y = _lcd.getSizeY() - esc_height-1;
+
+    unsigned char *data = (unsigned char *)esc_header_data;
+    for (unsigned int y = 0; y < esc_height; ++y) {
+        for (unsigned int x = 0; x < esc_width; ++x) {
+            unsigned char pixel[3];
+            ENTER_PIXEL(data, pixel);
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            uint32_t color = (r << 16) | (g << 8) | b; // RGB888
+            _lcd.drawPixel(start_x+x,start_y+y, color);
+        }
+    }
+    draw_string(290,start_y+6,"Stop",0);
+}
+
+void main_task::draw_footer_enter() {
+    uint16_t start_x,start_y;
+
+    start_x = 270;
+    start_y = _lcd.getSizeY() - enter_height-1;
+
+    unsigned char *data = (unsigned char *)enter_header_data;
+    for (unsigned int y = 0; y < enter_height; ++y) {
+        for (unsigned int x = 0; x < enter_width; ++x) {
+            unsigned char pixel[3];
+            ENTER_PIXEL(data, pixel);
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            uint32_t color = (r << 16) | (g << 8) | b; // RGB888
+            _lcd.drawPixel(start_x+x,start_y+y, color);
+        }
+    }
+    draw_string(290,start_y+6,"Play",0);
+}
+
+void main_task::draw_footer_nav() {
+
+    uint16_t start_x,start_y;
+
+    start_x = 10;
+    start_y = _lcd.getSizeY() - nav_height-1;
+
+    unsigned char *data = (unsigned char *)nav_header_data;
+    for (unsigned int y = 0; y < nav_height; ++y) {
+        for (unsigned int x = 0; x < nav_width; ++x) {
+            unsigned char pixel[3];
+            ENTER_PIXEL(data, pixel);
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            uint32_t color = (r << 16) | (g << 8) | b; // RGB888
+            _lcd.drawPixel(start_x+x,start_y+y, color);
+        }
+    }
+    draw_string(30,start_y+6,"Nav.",0);
+
+}
+
+void main_task::draw_footer(uint8_t stat) {
+    //stat 1 == menu_list   ==> nav icon, Enter icon
+    //stat 2 == playing music ==>  only Esc icon
+    _gui.FillFrame(0,_lcd.getSizeY()-20,_lcd.getSizeX()-1,_lcd.getSizeY()-1,C_BLACK);
+    if(stat == 1) {
+        draw_footer_nav();
+        draw_footer_enter();
+    }
+    if(stat == 2) {
+        draw_footer_esc();
+    }
+
+    _lcd.drawHLine(10,_lcd.getSizeY()-19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
 }
 
 void main_task::draw_playing() {
@@ -340,7 +435,7 @@ void main_task::run() {
     int kbd_ret = 0;
     int c;
     static int ctrlheld = 0;
-    const char spinner[] = {'/', '-', '|', '\\'};
+    ///const char spinner[] = {'/', '-', '|', '\\'};
     uint8_t spin_i = 0;
     uint8_t spin_timer = 0;
 
@@ -368,14 +463,15 @@ void main_task::run() {
                     //truncate_string(fname_list[_sel_index],tmp,33);
                     draw_header("Now Playing");
                     draw_playing();
+                    draw_footer(2);
                     update_required = 0;
                 }
                 if(spin_timer >= 100) {
                     //(bitrate*8/)filesize
                     //draw bar use last_play_pos
                     //draw_bar(0,last_play_pos,C_BLACK);
-                    play_pos = decoder.get_position(menu_items[_sel_index].fsize,_lcd.getSizeY());
-                    printf("play_pos %d\n",play_pos);
+                    play_pos = decoder.get_position(menu_items[_sel_index].fsize,_lcd.getSizeY()-20);
+                    ///printf("play_pos %d\n",play_pos);
                     //draw bar use play_pos
                     play_pos_diff = play_pos - last_play_pos;
                     if(play_pos_diff < 0) {// VBR
@@ -384,7 +480,15 @@ void main_task::run() {
                         //draw_bar(last_play_pos,play_pos,C_BLACK);
                         draw_bar(play_pos,play_pos+play_pos_diff,C_GAINSBORO);
                     }
-                    draw_char(20, 300, spinner[spin_i % 4]);
+                    uint32_t seconds = decoder.get_total_seconds();
+                    // 计算分钟和秒
+                    int minutes = seconds / 60;
+                    int remaining_seconds = seconds % 60;
+
+                    // 格式化为 "MM:SS" 格式并存入 buffer
+                    snprintf(tmp, 6, "%02d:%02d", minutes, remaining_seconds);
+                    draw_string(10,288,tmp,0);
+                    ///draw_char(20, 300, spinner[spin_i % 4]);
                     spin_i++;
                     spin_timer = 0;
                     last_play_pos = play_pos;
