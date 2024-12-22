@@ -410,7 +410,7 @@ void main_task::draw_footer(uint8_t stat) {
         draw_footer_esc();
     }
 
-    _lcd.drawHLine(10,_lcd.getSizeY()-19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
+    _lcd.drawHLine(10,_lcd.getSizeY()-20,_lcd.getSizeX()-10,C_LIGHT_GRAY);
 }
 
 void main_task::draw_playing() {
