@@ -38,7 +38,7 @@
 #include "uGUI_colors.h"
 #include "font_6x8.h"
 #include "font_8x14.h"
-#include "font_24x40.h"
+#include "font_12x20.h"
 #include "ili9488_drv.h"
 #include "i2ckbd.h"
 

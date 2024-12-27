@@ -55,7 +55,7 @@ void main_task::draw_string(int x,int y,const char*str,uint8_t fnt = 1){
         _gui.FontSelect(&FONT_8X14);
     }
     if(fnt == 2) {
-        _gui.FontSelect(&FONT_24X40);
+        _gui.FontSelect(&FONT_12X20);
     }
 
     _gui.SetForecolor(C_GAINSBORO);
@@ -75,7 +75,7 @@ void main_task::draw_char(int x,int y ,char c) {
 }
 
 void main_task::draw_big_char(int x,int y ,char c) {
-    _gui.FontSelect(&FONT_24X40);
+    _gui.FontSelect(&FONT_12X20);
     _gui.PutChar(c,x,y,C_GAINSBORO,C_BLACK, true);
 }
 void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
@@ -86,8 +86,8 @@ void main_task::draw_bar(int x1, int x2,UG_COLOR c) {
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 280
-#define FONT_WIDTH 24
-#define FONT_HEIGHT 40
+#define FONT_WIDTH 12
+#define FONT_HEIGHT 20
 #define MAX_CHARS_PER_LINE (SCREEN_WIDTH / FONT_WIDTH)
 #define MAX_LINES 2
 
@@ -301,13 +301,12 @@ void main_task::draw_logo(){
     start_x = (_lcd.getSizeX() - logo_width)/2;
     start_y = (_lcd.getSizeY() - logo_height)/2;
 
-    unsigned char *data = (unsigned char *)header_data; // 原始索引数据
+    unsigned char *data = (unsigned char *)header_data;
     for (unsigned int y = 0; y < logo_height; ++y) {
         for (unsigned int x = 0; x < logo_width; ++x) {
             unsigned char pixel[3];
             HEADER_PIXEL(data, pixel);
 
-            // 将颜色存储为 RGB888 格式
             uint8_t r = pixel[0];
             uint8_t g = pixel[1];
             uint8_t b = pixel[2];
@@ -481,11 +480,11 @@ void main_task::run() {
                         draw_bar(play_pos,play_pos+play_pos_diff,C_GAINSBORO);
                     }
                     uint32_t seconds = decoder.get_total_seconds();
-                    // 计算分钟和秒
+
                     int minutes = seconds / 60;
                     int remaining_seconds = seconds % 60;
 
-                    // 格式化为 "MM:SS" 格式并存入 buffer
+                    // "MM:SS"
                     snprintf(tmp, 6, "%02d:%02d", minutes, remaining_seconds);
                     draw_string(10,288,tmp,0);
                     ///draw_char(20, 300, spinner[spin_i % 4]);
