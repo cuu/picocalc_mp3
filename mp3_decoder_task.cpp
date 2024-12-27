@@ -4,7 +4,7 @@
 
 mp3_decoder_task::mp3_decoder_task(pcm_audio_interface & pcm_if, sd_reader_task & sd) :
     task("MP3 decoder", MP3_DECODER_STACKSIZE),
-    _pcm_if(pcm_if), _sd_reader(sd), _led(LED_PIN), _pcm_rate(0),_bitrate(0),_total_time(0)
+    _pcm_if(pcm_if), _sd_reader(sd), _led(LED_PIN), _pcm_rate(0),_bitrate(0),_total_time(0),_playback_state(PLAYING)
 {
     mad_timer_reset(&_timer);
     _led.gpioMode(GPIO::OUTPUT);
@@ -34,9 +34,11 @@ void mp3_decoder_task::run() {
 // libmad input callback //
 ///////////////////////////
 enum mad_flow mp3_decoder_task::input(void *data, struct mad_stream *stream) {
+
     // Cast user defined data. Here we get a pointer
     // to the decoder task!
     auto * _this = (mp3_decoder_task *)data;
+    _this->check_pause();
     sd_reader_task & sd = _this->_sd_reader;
 
     // The following code is inspired by this article:
@@ -132,7 +134,7 @@ enum mad_flow mp3_decoder_task::output(void *data, mad_header const *header, mad
 {
     (void)(header);
     auto * _this = (mp3_decoder_task *)data;
-
+    _this->check_pause();
     // Wait until the PCM result can be written
     while (_this->_pcm_if.pcmFifoAvailablePut() < pcm->length) {
         task::sleep_ms(5);
@@ -155,8 +157,10 @@ enum mad_flow mp3_decoder_task::output(void *data, mad_header const *header, mad
 enum mad_flow mp3_decoder_task::error(void *data,mad_stream *stream, mad_frame *frame)
 {
     (void)(data);
-    (void)(stream);
     (void)(frame);
+    printf("Decoding error 0x%04x (%s) at byte offset %lu\n",
+            stream->error, mad_stream_errorstr(stream),
+            stream->this_frame - stream->buffer);
     // return MAD_FLOW_BREAK to stop decoding
     return MAD_FLOW_CONTINUE;
 }
@@ -201,4 +205,26 @@ uint16_t mp3_decoder_task::get_position(unsigned long fsize, int max_pos) {
 
 uint32_t mp3_decoder_task::get_total_seconds() {
     return _total_time/1000;
+}
+
+uint8_t mp3_decoder_task::toggle_pause() {
+    _pause_mutex.lock();
+    if(_playback_state == PLAYING) {
+        _playback_state = PAUSED;
+    }else{
+        _playback_state = PLAYING;
+    }
+    _pause_mutex.unlock();
+    return _playback_state;
+}
+
+void mp3_decoder_task::check_pause() {
+    _pause_mutex.lock();
+    while (_playback_state == PAUSED) {
+        task::sleep_ms(20);
+        if(_playback_state==PLAYING) {
+            break;
+        }
+    }
+    _pause_mutex.unlock();
 }

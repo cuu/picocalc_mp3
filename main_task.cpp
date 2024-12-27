@@ -541,12 +541,12 @@ void main_task::run() {
             if (c >= 'a' && c <= 'z' && ctrlheld)c = c - 'a' + 1;
             switch (c) {
                 case 0xb5://UP
-                    if(key_stat == 1) {
+                    if(key_stat == 1 && !playing) {
                         menu_up();
                     }
                     break;
                 case 0xb6://DOWN
-                    if(key_stat == 1) {
+                    if(key_stat == 1 && !playing) {
                         menu_down();
                     }
                     break;
@@ -555,17 +555,15 @@ void main_task::run() {
                 case 0xb7://RIGHT
                     break;
                 case 0x0A://ENTER
-                    if(key_stat == 1) {
+                    if(key_stat == 1 && !playing) {
                         menu_start(sd_reader, decoder, pcm_drv);
                     }
                     break;
                 case 0xB1://ESC
-                    if(key_stat == 1) {
-                        if (playing) {
-                            playing = 0;
-                            sd_reader.force_eof();
-                            printf("stop playing\n");
-                        }
+                    if(key_stat == 1 && playing) {
+                        playing = 0;
+                        sd_reader.force_eof();
+                        printf("stop playing\n");
                         update_required = 1;
                     }
                     break;
