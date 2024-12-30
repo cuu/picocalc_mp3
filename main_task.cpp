@@ -195,12 +195,13 @@ int main_task::select_mp3() {
      * 3px
      */
 
-    for (int i = 0; i < ITEMS_PER_PAGE && (_page_index + i) < num_files; i++) {
+    for (int i = _page_index; i < _page_index+ITEMS_PER_PAGE;i++) {
+        if(i >= num_files) break;
         //truncate_string(file_list[_page_index+i],tmp,33);
         menu_items[i].x = start_x;
         menu_items[i].y = start_y;
 
-        draw_string(menu_items[i].x, menu_items[i].y, menu_items[_page_index + i].fname);
+        draw_string(menu_items[i].x, menu_items[i].y, menu_items[i].fname);
         start_y+=23;
     }
 
@@ -210,22 +211,22 @@ void main_task::draw_cursor() {
     char buf[12];
     //sprintf(buf, "%02d", _sel_index + 1);
     //draw_string(0,_lcd.getSizeY()-20,buf);
-
+    printf("%d %d %d\n",_last_sel_index,_sel_index,_page_index);
     uint16_t x,y;
 
     if(update_sel){
-        x = menu_items[_last_sel_index%ITEMS_PER_PAGE].x;
-        y = menu_items[_last_sel_index%ITEMS_PER_PAGE].y;
+        x = menu_items[_last_sel_index % ITEMS_PER_PAGE].x;
+        y = menu_items[_last_sel_index % ITEMS_PER_PAGE].y;
 
-        _gui.FillFrame(10,y-2,_lcd.getSizeX()-10,y+15,C_BLACK);
-        draw_string(x,y, menu_items[_page_index+_last_sel_index].fname);
+        _gui.FillFrame(10, y - 2, _lcd.getSizeX() - 10, y + 15, C_BLACK);
+        draw_string(x, y, menu_items[_last_sel_index].fname);
     }
     x = menu_items[_sel_index % ITEMS_PER_PAGE].x;
     y = menu_items[_sel_index % ITEMS_PER_PAGE].y;
 
     _gui.FillFrame(10,y-2,_lcd.getSizeX()-10,y+15,C_GAINSBORO);
     //draw_string(0, (_sel_index % ITEMS_PER_PAGE) * 20+20, "=>");
-    draw_highlight_string(11, y, menu_items[_page_index+_sel_index].fname);
+    draw_highlight_string(11, y, menu_items[_sel_index].fname);
 
 }
 
@@ -242,6 +243,7 @@ void main_task::boot_menu() {
         clear_menu();
         _last_page_index = _page_index;
         update_required = 1;
+        update_sel = 0;
     }
 
     if(update_required) {
