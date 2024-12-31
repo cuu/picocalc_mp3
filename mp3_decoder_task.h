@@ -9,9 +9,6 @@
 #include "task.h"
 #include "mad.h"
 
-#define PLAYING 0
-#define PAUSED  1
-
 class mp3_decoder_task : public task
 {
 public:
@@ -21,8 +18,6 @@ public:
     void reset();
     uint16_t  get_position(unsigned long fsize,int max_pos);
     uint32_t get_total_seconds();
-    uint8_t toggle_pause();
-    void check_pause();
 private:
     static enum mad_flow input (void *data, struct mad_stream *stream);
     static enum mad_flow header(void *data, struct mad_header const *);
@@ -39,8 +34,6 @@ private:
     mad_timer_t             _timer;
     unsigned long           _bitrate;
     unsigned long           _total_time;
-    volatile uint8_t        _playback_state;
-    mutex<lock_base_rp2040> _pause_mutex;
 };
 
 #endif // MP3_DECODER_TASK_H

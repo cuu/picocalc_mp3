@@ -5,6 +5,7 @@
 #include "enter18.h"
 #include "esc18.h"
 #include "nav18.h"
+#include "icon_p.h"
 
 main_task::main_task()
         : task("Main", MAIN_STACKSIZE),
@@ -30,7 +31,8 @@ main_task::main_task()
           playing(0),
           last_play_pos(0),
           play_pos(0),
-          num_files(0){
+          num_files(0),
+          pause_flag(0){
 
     _next.gpioMode(GPIO::INPUT | GPIO::PULLUP);
     _part.gpioMode(GPIO::INPUT | GPIO::PULLUP);
@@ -295,6 +297,8 @@ void main_task::menu_start(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pc
     playing =1;
     last_play_pos = 0;
     play_pos = 0;
+    pause_flag = 0;
+
 }
 
 void main_task::draw_logo(){
@@ -399,6 +403,29 @@ void main_task::draw_footer_nav() {
 
 }
 
+void main_task::draw_footer_pause() {
+    uint16_t start_x,start_y;
+
+    start_x = 210;
+    start_y = _lcd.getSizeY() - icon_p_height-1;
+
+    unsigned char *data = (unsigned char *)icon_p_header_data;
+    for (unsigned int y = 0; y < icon_p_height; ++y) {
+        for (unsigned int x = 0; x < icon_p_width; ++x) {
+            unsigned char pixel[3];
+            ICON_P_PIXEL(data, pixel);
+
+            uint8_t r = pixel[0];
+            uint8_t g = pixel[1];
+            uint8_t b = pixel[2];
+
+            uint32_t color = (r << 16) | (g << 8) | b; // RGB888
+            _lcd.drawPixel(start_x+x,start_y+y, color);
+        }
+    }
+    draw_string(230,start_y+6,"Pause",0);
+}
+
 void main_task::draw_footer(uint8_t stat) {
     //stat 1 == menu_list   ==> nav icon, Enter icon
     //stat 2 == playing music ==>  only Esc icon
@@ -408,6 +435,7 @@ void main_task::draw_footer(uint8_t stat) {
         draw_footer_enter();
     }
     if(stat == 2) {
+        draw_footer_pause();
         draw_footer_esc();
     }
 
@@ -564,9 +592,28 @@ void main_task::run() {
                 case 0xB1://ESC
                     if(key_stat == 1 && playing) {
                         playing = 0;
+                        if(decoder.getState()==task::SUSPENDED){//maybe is suspended
+                            decoder.resume();
+                        }
                         sd_reader.force_eof();
                         printf("stop playing\n");
+                        pause_flag = 0;
                         update_required = 1;
+
+                    }
+                    break;
+                case 'p':
+                    if(key_stat == 1 && playing) {
+                        if(pause_flag == 0) {
+                            pause_flag = 1;
+                            decoder.suspend();
+                            draw_header("Paused");
+                        }else{
+                            pause_flag = 0;
+                            decoder.resume();
+                            draw_header("Now Playing");
+                        }
+                        printf("pause playing mp3\n");
                     }
                     break;
                 default:

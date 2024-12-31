@@ -75,6 +75,7 @@ public:
     void draw_footer_enter();
     void draw_footer_esc();
     void draw_footer_nav();
+    void draw_footer_pause();
     void draw_playing();
     void draw_wrap_text(const char *);
 private:
@@ -108,6 +109,7 @@ private:
     uint16_t play_pos;
     MENU_ITEM  menu_items[MAX_FILES]{};
     uint16_t num_files;
+    uint8_t pause_flag ;
 };
 
 #endif // MAIN_TASK_H
