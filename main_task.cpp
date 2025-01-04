@@ -2,9 +2,9 @@
 #include <cstring>
 #include "main_task.h"
 #include "logo50.h"
-#include "enter18.h"
-#include "esc18.h"
-#include "nav18.h"
+#include "icon_enter.h"
+#include "icon_esc.h"
+#include "icon_nav.h"
 #include "icon_p.h"
 
 main_task::main_task()
@@ -335,14 +335,14 @@ void main_task::draw_header(char*title) {
 void main_task::draw_footer_esc() {
     uint16_t start_x,start_y;
 
-    start_x = 270;
-    start_y = _lcd.getSizeY() - esc_height-1;
+    start_x = 261;
+    start_y = _lcd.getSizeY() - esc_height-5;
 
     unsigned char *data = (unsigned char *)esc_header_data;
     for (unsigned int y = 0; y < esc_height; ++y) {
         for (unsigned int x = 0; x < esc_width; ++x) {
             unsigned char pixel[3];
-            ENTER_PIXEL(data, pixel);
+            ESC_PIXEL(data, pixel);
 
             uint8_t r = pixel[0];
             uint8_t g = pixel[1];
@@ -352,14 +352,14 @@ void main_task::draw_footer_esc() {
             _lcd.drawPixel(start_x+x,start_y+y, color);
         }
     }
-    draw_string(290,start_y+6,"Stop",0);
+    draw_string(285,start_y+3,"Stop",0);
 }
 
 void main_task::draw_footer_enter() {
     uint16_t start_x,start_y;
 
-    start_x = 270;
-    start_y = _lcd.getSizeY() - enter_height-1;
+    start_x = 260;
+    start_y = _lcd.getSizeY() - enter_height-5;
 
     unsigned char *data = (unsigned char *)enter_header_data;
     for (unsigned int y = 0; y < enter_height; ++y) {
@@ -375,7 +375,7 @@ void main_task::draw_footer_enter() {
             _lcd.drawPixel(start_x+x,start_y+y, color);
         }
     }
-    draw_string(290,start_y+6,"Play",0);
+    draw_string(285,start_y+3,"Play",0);
 }
 
 void main_task::draw_footer_nav() {
@@ -407,7 +407,7 @@ void main_task::draw_footer_pause() {
     uint16_t start_x,start_y;
 
     start_x = 210;
-    start_y = _lcd.getSizeY() - icon_p_height-1;
+    start_y = _lcd.getSizeY() - icon_p_height-5;
 
     unsigned char *data = (unsigned char *)icon_p_header_data;
     for (unsigned int y = 0; y < icon_p_height; ++y) {
@@ -423,7 +423,7 @@ void main_task::draw_footer_pause() {
             _lcd.drawPixel(start_x+x,start_y+y, color);
         }
     }
-    draw_string(230,start_y+6,"Pause",0);
+    draw_string(225,start_y+3,"Pause",0);
 }
 
 void main_task::draw_footer(uint8_t stat) {

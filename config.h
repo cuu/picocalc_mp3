@@ -39,5 +39,5 @@
 #define MP3_BUF_SIZE   4096
 
 #define MAX_FILES 64
-#define ITEMS_PER_PAGE 10
+#define ITEMS_PER_PAGE 12
 #endif // CONFIG_H
