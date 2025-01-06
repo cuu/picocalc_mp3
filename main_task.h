@@ -76,6 +76,7 @@ public:
     void draw_footer_esc();
     void draw_footer_nav();
     void draw_footer_pause();
+    void draw_footer_pagenumber();
     void draw_playing();
     void draw_wrap_text(const char *);
 private:

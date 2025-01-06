@@ -426,6 +426,18 @@ void main_task::draw_footer_pause() {
     draw_string(225,start_y+3,"Pause",0);
 }
 
+void main_task::draw_footer_pagenumber() {
+    // page1/4
+
+    char tmp[12];
+    int total_page = (num_files / ITEMS_PER_PAGE)+1;
+    int cur_page = (_sel_index / ITEMS_PER_PAGE)+1;
+    if(total_page > 1) {
+        sprintf(tmp, "%d/%d", cur_page, total_page);
+        draw_string(150, _lcd.getSizeY() - nav_height+5, tmp, 0);
+    }
+}
+
 void main_task::draw_footer(uint8_t stat) {
     //stat 1 == menu_list   ==> nav icon, Enter icon
     //stat 2 == playing music ==>  only Esc icon
@@ -433,6 +445,7 @@ void main_task::draw_footer(uint8_t stat) {
     if(stat == 1) {
         draw_footer_nav();
         draw_footer_enter();
+        draw_footer_pagenumber();
     }
     if(stat == 2) {
         draw_footer_pause();
