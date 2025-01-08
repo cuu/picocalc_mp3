@@ -383,13 +383,13 @@ void main_task::draw_footer_nav() {
     uint16_t start_x,start_y;
 
     start_x = 10;
-    start_y = _lcd.getSizeY() - nav_height-1;
+    start_y = _lcd.getSizeY() - nav_height-6;
 
     unsigned char *data = (unsigned char *)nav_header_data;
     for (unsigned int y = 0; y < nav_height; ++y) {
         for (unsigned int x = 0; x < nav_width; ++x) {
             unsigned char pixel[3];
-            ENTER_PIXEL(data, pixel);
+            NAV_PIXEL(data, pixel);
 
             uint8_t r = pixel[0];
             uint8_t g = pixel[1];
@@ -399,7 +399,7 @@ void main_task::draw_footer_nav() {
             _lcd.drawPixel(start_x+x,start_y+y, color);
         }
     }
-    draw_string(30,start_y+6,"Nav.",0);
+    draw_string(23,start_y+3,"Nav.",0);
 
 }
 
@@ -434,7 +434,7 @@ void main_task::draw_footer_pagenumber() {
     int cur_page = (_sel_index / ITEMS_PER_PAGE)+1;
     if(total_page > 1) {
         sprintf(tmp, "%d/%d", cur_page, total_page);
-        draw_string(150, _lcd.getSizeY() - nav_height+5, tmp, 0);
+        draw_string(150, _lcd.getSizeY() - nav_height-2, tmp, 0);
     }
 }
 
