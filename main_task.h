@@ -67,6 +67,7 @@ public:
     void menu_up();
     void menu_down();
     void menu_start(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv);
+    void menu_start_all(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pcm_pwm_rp2040_drv &pcm_drv);
     void draw_logo();
     void clear_screen();
     void clear_menu();
@@ -111,6 +112,7 @@ private:
     MENU_ITEM  menu_items[MAX_FILES]{};
     uint16_t num_files;
     uint8_t pause_flag ;
+    uint8_t play_flag;//default:0, play_all = 1,play_shuffle = 2
 };
 
 #endif // MAIN_TASK_H

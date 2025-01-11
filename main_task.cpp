@@ -32,7 +32,8 @@ main_task::main_task()
           last_play_pos(0),
           play_pos(0),
           num_files(0),
-          pause_flag(0){
+          pause_flag(0),
+          play_flag(0){
 
     _next.gpioMode(GPIO::INPUT | GPIO::PULLUP);
     _part.gpioMode(GPIO::INPUT | GPIO::PULLUP);
@@ -301,6 +302,23 @@ void main_task::menu_start(sd_reader_task&sd_reader,mp3_decoder_task &decoder,pc
 
 }
 
+//play through the list start from sel_index;
+void main_task::menu_start_all(sd_reader_task &sd_reader, mp3_decoder_task &decoder, pcm_pwm_rp2040_drv &pcm_drv) {
+    FatFs::FRESULT res = FatFs::FR_OK;
+    printf("start play all: %d\n",_sel_index);
+    res = _fs.open(&_file, menu_items[_sel_index].fname, FA_OPEN_EXISTING | FA_READ);
+    assert(res == FatFs::FR_OK);
+    sd_reader.start(&_fs, &_file);
+    decoder.reset();
+    decoder.start();
+    update_required = 1;
+    playing =1;
+    last_play_pos = 0;
+    play_pos = 0;
+    pause_flag = 0;
+    play_flag = 1;
+}
+
 void main_task::draw_logo(){
     uint16_t start_x,start_y;
 
@@ -327,7 +345,7 @@ void main_task::draw_header(char*title) {
     _gui.FontSelect(&FONT_8X14);
     _gui.SetForecolor(C_GAINSBORO);
     _gui.SetBackcolor(C_BLACK);
-    _gui.PutString(11,(20-14)/2,"                  ");
+    _gui.PutString(11,(20-14)/2,"                    ");
     _gui.PutString(11,(20-14)/2,title);
     _lcd.drawHLine(10,19,_lcd.getSizeX()-10,C_LIGHT_GRAY);
 }
@@ -503,7 +521,11 @@ void main_task::run() {
                 if(update_required) {
                     clear_menu();
                     //truncate_string(fname_list[_sel_index],tmp,33);
-                    draw_header("Now Playing");
+                    if(play_flag == 1) {
+                        draw_header("Now Playing All");
+                    }else{
+                        draw_header("Now Playing");
+                    }
                     draw_playing();
                     draw_footer(2);
                     update_required = 0;
@@ -541,6 +563,10 @@ void main_task::run() {
                 _fs.close(&_file);
                 playing =0;
                 update_required =1;
+                if(play_flag == 1) {
+                    menu_down();
+                    menu_start_all(sd_reader,decoder,pcm_drv);
+                }
             }
         }else{
             boot_menu();
@@ -602,6 +628,11 @@ void main_task::run() {
                         menu_start(sd_reader, decoder, pcm_drv);
                     }
                     break;
+                case 'a':
+                    if(key_stat == 1 && !playing) {
+                        menu_start_all(sd_reader,decoder,pcm_drv);
+                    }
+                    break;
                 case 0xB1://ESC
                     if(key_stat == 1 && playing) {
                         playing = 0;
@@ -612,7 +643,7 @@ void main_task::run() {
                         printf("stop playing\n");
                         pause_flag = 0;
                         update_required = 1;
-
+                        play_flag = 0;
                     }
                     break;
                 case 'p':
